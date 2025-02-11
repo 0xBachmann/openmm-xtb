@@ -43,14 +43,14 @@ jobs:
                  -e "s/@GCC_VERSION@/${{ matrix.gcc-version }}.*/g" \
                  devtools/conda-envs/build-${{ matrix.os }}.yml
 
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: conda-incubator/setup-miniconda@v3
         name: "Prepare base dependencies"
         with:
           python-version: ${{ matrix.python-version }}
           activate-environment: build
           environment-file: devtools/conda-envs/build-${{ matrix.os }}.yml
           auto-activate-base: false
-          miniforge-variant: Mambaforge
+          miniforge-variant: Miniforge3
           use-mamba: true
 
       - name: "Set SDK on MacOS (if needed)"
