@@ -101,6 +101,7 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
         else if (owner.getMethod() == XtbForce::GFNFF)
             xtb_loadGFNFF(env, mol, calc, NULL);
         checkErrors();
+        hasInitializedMolecule = true;
     }
     checkErrors();
 
