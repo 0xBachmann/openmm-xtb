@@ -29,7 +29,7 @@ INCLUDE_DIRECTORIES("${XTB_INCLUDE_DIR}")
 LINK_DIRECTORIES("${XTB_LIBRARY_DIR}")
 
 # Specify the C++ version we are building for.
-SET (CMAKE_CXX_STANDARD 11)
+SET (CMAKE_CXX_STANDARD 17)
 
 # Set flags for linking on mac
 IF(APPLE)

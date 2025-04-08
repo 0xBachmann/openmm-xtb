@@ -8,7 +8,7 @@ openmmxtb_header_dir = '@OPENMMXTB_HEADER_DIR@'
 openmmxtb_library_dir = '@OPENMMXTB_LIBRARY_DIR@'
 
 # setup extra compile and link arguments on Mac
-extra_compile_args=['-std=c++11']
+extra_compile_args=['-std=c++17']
 extra_link_args = []
 
 if platform.system() == 'Darwin':
