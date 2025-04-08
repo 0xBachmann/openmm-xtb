@@ -32,7 +32,6 @@
 #include "internal/XtbForceImpl.h"
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/ContextImpl.h"
-#include <map>
 #include <cmath>
 
 using namespace XtbPlugin;
@@ -63,26 +62,9 @@ void XtbForceImpl::initialize(ContextImpl& context) {
     multiplicity = owner.getMultiplicity();
     electrostaticEmbedding = owner.hasElectrostaticEmbedding();
     if (electrostaticEmbedding) {
-        pcCharges = owner.getPointCharges();
-        pcIndices = owner.getParticleIndices();
-        pcNumbers = owner.getPointChargeNumbers();
+        pointCharges = owner.getPointCharges();
 
         pcCutoff2 = std::pow(owner.getPointChargeCutoff(), 2);
-        const auto chargeGroupIndices = owner.getChargeGroups();
-        if (pcIndices.size() != chargeGroupIndices.size() ||
-            pcIndices.size() != pcCharges.size() ||
-            pcIndices.size() != pcNumbers.size()) {
-            throw OpenMMException("Different numbers of point charge indices, point charge numbers, point charge charges or charge group indices are specified");
-        }
-
-        // use local indices in the charge group, use pcIndices to then get the global index
-        std::map<int, std::vector<int>> chargeGroupMap;
-        for (int i = 0; i < pcIndices.size(); i++) {
-            chargeGroupMap[chargeGroupIndices[i]].push_back(i);
-        }
-        for (const auto& chargeGroup : chargeGroupMap) {
-            chargeGroups.push_back(chargeGroup.second);
-        }
 
         if (owner.getMethod() == XtbForce::GFNFF) {
             throw OpenMMException("GFNFF method does not support external charges");
@@ -135,19 +117,17 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
     checkErrors();
 
     if (electrostaticEmbedding) {
-        // TODO update neighbors and set npc and resize pcForceVec
-        updatePCList(context, positions);
-        bdpcIndices.clear();
-        bdpcCharges.clear();
-        bdpcNumbers.clear();
-        bdpcPositions.clear();
+        boundaryPCIndices.clear();
+        boundaryPCCharges.clear();
+        boundaryPCNumbers.clear();
+        boundaryPCPositions.clear();
 
-        auto chargeGroupInBoundaryRegion = [&](const std::vector<int>& chargeGroup) {
-            for (auto i: chargeGroup) {
+        auto chargeGroupInBoundaryRegion = [&](const std::vector<PointCharge>& chargeGroup) {
+            for (auto [index, number, charge]: chargeGroup) {
                 for (auto j: indices) {
                     // see https://github.com/openmm/openmm/blob/master/platforms/reference/src/SimTKReference/ReferenceForce.cpp#L80
                     // works only for cubic boxes
-                    Vec3 diff = positions[pcIndices[i]] - positions[j];
+                    Vec3 diff = positions[index] - positions[j];
                     if (owner.usesPeriodicBoundaryConditions()) {
                         const Vec3 base(std::floor(diff[0] / box[0][0] + 0.5) * box[0][0],
                                         std::floor(diff[1] / box[1][1] + 0.5) * box[1][1],
@@ -164,22 +144,23 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
         };
 
 
-        for (const auto& chargeGroup : chargeGroups) {
+        for (const auto& chargeGroup : pointCharges) {
             if (chargeGroupInBoundaryRegion(chargeGroup)) {
-                for (auto i: chargeGroup) {
-                    bdpcIndices.push_back(pcIndices[i]);
-                    bdpcCharges.push_back(pcCharges[i]);
-                    bdpcNumbers.push_back(pcNumbers[i]);
+                for (auto [index, number, charge]: chargeGroup) {
+                    boundaryPCIndices.push_back(index);
+                    boundaryPCNumbers.push_back(number);
+                    boundaryPCCharges.push_back(charge);
 
-                    bdpcPositions.push_back(distanceScale*positions[pcIndices[i]][0]);
-                    bdpcPositions.push_back(distanceScale*positions[pcIndices[i]][1]);
-                    bdpcPositions.push_back(distanceScale*positions[pcIndices[i]][2]);
+                    boundaryPCPositions.push_back(distanceScale*positions[index][0]);
+                    boundaryPCPositions.push_back(distanceScale*positions[index][1]);
+                    boundaryPCPositions.push_back(distanceScale*positions[index][2]);
                 }
             }
         }
-        numbdpc = bdpcIndices.size();
+        numBoundaryPC = boundaryPCIndices.size();
+        pcForceVec.resize(3 * numBoundaryPC);
 
-        xtb_setExternalCharges(env, calc, &numbdpc, bdpcNumbers.data(), bdpcCharges.data(), bdpcPositions.data());
+        xtb_setExternalCharges(env, calc, &numBoundaryPC, boundaryPCNumbers.data(), boundaryPCCharges.data(), boundaryPCPositions.data());
         checkErrors();
     }
 
@@ -197,15 +178,11 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
         forces[indices[i]] = -forceScale*Vec3(forceVec[3*i], forceVec[3*i+1], forceVec[3*i+2]);
     if (electrostaticEmbedding) {
         xtb_getPCGradient(env, res, pcForceVec.data());
-        for (int i = 0; i < numbdpc; i++)
-            forces[pcIndices[i]] = -forceScale*Vec3(pcForceVec[3*i], pcForceVec[3*i+1], pcForceVec[3*i+2]);
+        for (int i = 0; i < numBoundaryPC; i++)
+            forces[boundaryPCIndices[i]] = -forceScale*Vec3(pcForceVec[3*i], pcForceVec[3*i+1], pcForceVec[3*i+2]);
         xtb_releaseExternalCharges(env, calc);
     }
     return energyScale*energy;
-}
-
-void XtbForceImpl::updatePCList(ContextImpl& context, const vector<Vec3>& positions) {
-
 }
 
 void XtbForceImpl::checkErrors() {

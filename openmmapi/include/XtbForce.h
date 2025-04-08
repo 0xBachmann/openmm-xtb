@@ -39,6 +39,13 @@
 
 namespace XtbPlugin {
 
+struct PointCharge {
+    PointCharge(int index, int number, double charge);
+    int index;
+    int number;
+    double charge;
+};
+
 /**
  * This class implements a connection between OpenMM and XTB (https://xtb-docs.readthedocs.io/en/latest).  It is a Force
  * object that you add to the System with addForce().  It computes forces on a subset (or potentially all) of the
@@ -77,13 +84,11 @@ public:
      * @param atomicNumbers    the atomic numbers of the particles to which this force should be applied.  This must
      *                         have the same length as particleIndices.  Element i of this vector is the atomic number
      *                         of the particle specified by element i of particleIndices.
-     * @param pcIndices        the indices of the particles within the System which should be treated as point charges
-     * @param pcNumbers        the atomic numbers of the point charges
-     * @param pcCharges        the charges of each point charge
-     * @param pcChargeGroups   the charge group index for every point charge
+     * @param pointCharges     contains the pointcharges grouped into charge groups. each pointcharge consists of the
+     *                         index, atomic number and charge
      * @param pcCutoff         the cutoff whether to treat a point charge in the boundary region
      */
-    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<int>& pcIndices, const std::vector<int>& pcNumbers, const std::vector<double>& pcCharges, const std::vector<int>& pcChargeGroups, double pcCutoff);
+    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<PointCharge>>& pointCharges, double pcCutoff);
     /**
      * Get the method to use for computing forces and energy.
      */
@@ -125,21 +130,9 @@ public:
      */
     void setAtomicNumbers(const std::vector<int>& numbers);
 
-    const std::vector<double>& getPointCharges() const;
+    const std::vector<std::vector<PointCharge>>& getPointCharges() const;
 
-    void setPointCharges(const std::vector<double>& charges);
-
-    const std::vector<int>& getPointChargeIndices() const;
-
-    void setPointChargeIndices(const std::vector<int>& indices);
-
-    const std::vector<int>& getPointChargeNumbers() const;
-
-    void setPointChargeNumbers(const std::vector<int>& numbers);
-
-    const std::vector<int>& getChargeGroups() const;
-
-    void setChargeGroups(const std::vector<int>& chargeGroups);
+    void setPointCharges(const std::vector<std::vector<PointCharge>>& pc);
 
     double getPointChargeCutoff() const;
 
@@ -164,8 +157,8 @@ private:
     bool periodic;
     bool electrostaticEmbedding;
     double pcCutoff;
-    std::vector<int> particleIndices, atomicNumbers, pcIndices, pcNumbers, pcChargeGroups;
-    std::vector<double> pcCharges;
+    std::vector<int> particleIndices, atomicNumbers;
+    std::vector<std::vector<PointCharge>> pointCharges;
 };
 
 } // namespace XtbPlugin

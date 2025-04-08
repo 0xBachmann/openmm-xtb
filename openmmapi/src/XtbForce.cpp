@@ -37,12 +37,15 @@ using namespace XtbPlugin;
 using namespace OpenMM;
 using namespace std;
 
+PointCharge::PointCharge(int index, int number, double charge) : index(index), number(number), charge(charge) {}
+
+
 XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const vector<int>& particleIndices, const vector<int>& atomicNumbers) :
         method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(false), particleIndices(particleIndices), atomicNumbers(atomicNumbers) {
 }
 
-XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<int>& pcIndices, const std::vector<int>& pcNumbers, const std::vector<double>& pcCharges, const std::vector<int>& pcChargeGroups, double pcCutoff) :
-        method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(true), particleIndices(particleIndices), pcIndices(pcIndices), pcNumbers(pcNumbers), pcChargeGroups(pcChargeGroups), pcCharges(pcCharges), pcCutoff(pcCutoff) {
+XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<PointCharge>>& pointCharges, double pcCutoff) :
+        method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(true), particleIndices(particleIndices), atomicNumbers(atomicNumbers), pointCharges(pointCharges), pcCutoff(pcCutoff) {
 }
 
 
@@ -86,36 +89,12 @@ void XtbForce::setAtomicNumbers(const vector<int>& numbers) {
     atomicNumbers = numbers;
 }
 
-const vector<double>& XtbForce::getPointCharges() const {
-    return pcCharges;
+const std::vector<std::vector<PointCharge>>& XtbForce::getPointCharges() const {
+    return pointCharges;
 }
 
-void XtbForce::setPointCharges(const vector<double>& charges) {
-    pcCharges = charges;
-}
-
-const vector<int>& XtbForce::getPointChargeIndices() const {
-    return pcIndices;
-}
-
-void XtbForce::setPointChargeIndices(const vector<int>& indices) {
-    pcIndices = indices;
-}
-
-const vector<int>& XtbForce::getPointChargeNumbers() const {
-    return pcNumbers;
-}
-
-void XtbForce::setPointChargeNumbers(const vector<int>& numbers) {
-    pcNumbers = numbers;
-}
-
-const vector<int>& XtbForce::getChargeGroups() const {
-    return pcChargeGroups;
-}
-
-void XtbForce::setChargeGroups(const vector<int>& chargeGroups) {
-    pcChargeGroups = chargeGroups;
+void XtbForce::setPointCharges(const std::vector<std::vector<PointCharge>>& pc) {
+    pointCharges = pc;
 }
 
 double XtbForce::getPointChargeCutoff() const {

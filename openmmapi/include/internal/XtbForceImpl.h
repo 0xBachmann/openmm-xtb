@@ -64,12 +64,11 @@ private:
     int multiplicity;
     bool hasInitializedMolecule;
     bool electrostaticEmbedding;
-    int numbdpc;
+    int numBoundaryPC;
     double pcCutoff2;
-    std::vector<int> indices, numbers, pcNumbers, pcIndices,
-        bdpcNumbers, bdpcIndices;
-    std::vector<std::vector<int>> chargeGroups;
-    std::vector<double> positionVec, forceVec, pcCharges, bdpcCharges, bdpcPositions, pcForceVec;
+    std::vector<int> indices, numbers, boundaryPCNumbers, boundaryPCIndices;
+    std::vector<std::vector<PointCharge>> pointCharges;
+    std::vector<double> positionVec, forceVec, boundaryPCCharges, boundaryPCPositions, pcForceVec;
 };
 
 } // namespace XtbPlugin
