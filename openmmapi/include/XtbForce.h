@@ -39,8 +39,8 @@
 
 namespace XtbPlugin {
 
-struct PointCharge {
-    PointCharge(int index, int number, double charge);
+struct XtbPointCharge {
+    XtbPointCharge(int index, int number, double charge);
     int index;
     int number;
     double charge;
@@ -88,7 +88,7 @@ public:
      *                         index, atomic number and charge
      * @param pcCutoff         the cutoff whether to treat a point charge in the boundary region
      */
-    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<PointCharge>>& pointCharges, double pcCutoff);
+    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, double pcCutoff);
     /**
      * Get the method to use for computing forces and energy.
      */
@@ -130,9 +130,9 @@ public:
      */
     void setAtomicNumbers(const std::vector<int>& numbers);
 
-    const std::vector<std::vector<PointCharge>>& getPointCharges() const;
+    const std::vector<std::vector<XtbPointCharge>>& getPointCharges() const;
 
-    void setPointCharges(const std::vector<std::vector<PointCharge>>& pc);
+    void setPointCharges(const std::vector<std::vector<XtbPointCharge>>& pc);
 
     double getPointChargeCutoff() const;
 
@@ -158,7 +158,7 @@ private:
     bool electrostaticEmbedding;
     double pcCutoff;
     std::vector<int> particleIndices, atomicNumbers;
-    std::vector<std::vector<PointCharge>> pointCharges;
+    std::vector<std::vector<XtbPointCharge>> pointCharges;
 };
 
 } // namespace XtbPlugin

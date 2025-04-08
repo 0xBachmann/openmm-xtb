@@ -67,7 +67,7 @@ private:
     int numBoundaryPC;
     double pcCutoff2;
     std::vector<int> indices, numbers, boundaryPCNumbers, boundaryPCIndices;
-    std::vector<std::vector<PointCharge>> pointCharges;
+    std::vector<std::vector<XtbPointCharge>> pointCharges;
     std::vector<double> positionVec, forceVec, boundaryPCCharges, boundaryPCPositions, pcForceVec;
 };
 

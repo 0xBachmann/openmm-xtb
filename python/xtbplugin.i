@@ -14,10 +14,9 @@
 
 %template(vectori) std::vector<int>;
 
-// First, define your PointCharge struct explicitly
 namespace XtbPlugin {
-    struct PointCharge {
-      	PointCharge(int index, int number, double charge);
+    struct XtbPointCharge {
+      	XtbPointCharge(int index, int number, double charge);
         int index;
         int number;
         double charge;
@@ -27,18 +26,18 @@ namespace XtbPlugin {
 // Tell SWIG how to handle this struct explicitly
 %inline %{
 namespace swig {
-    template <> struct traits<XtbPlugin::PointCharge> {
+    template <> struct traits<XtbPlugin::XtbPointCharge> {
         typedef pointer_category category;
-        static const char* type_name() { return "XtbPlugin::PointCharge"; }
+        static const char* type_name() { return "XtbPlugin::XtbPointCharge"; }
     };
 }
 %}
 
 // Make sure SWIG knows this is a value type
-%feature("valuewrapper") XtbPlugin::PointCharge;
+%feature("valuewrapper") XtbPlugin::XtbPointCharge;
 
 // Then declare the actual templates with names
-%template(PointCharges) std::vector<std::vector<XtbPlugin::PointCharge>>;
+%template(XtbPointCharges) std::vector<std::vector<XtbPlugin::XtbPointCharge>>;
 
 
 namespace XtbPlugin {
@@ -50,7 +49,7 @@ public:
         GFNFF = 2
     };
     XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers);
-    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<PointCharge>>& pointCharges, double pcCutoff);
+    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, double pcCutoff);
     Method getMethod() const;
     void setMethod(Method method);
     double getCharge() const;
@@ -61,8 +60,8 @@ public:
     void setParticleIndices(const std::vector<int>& indices);
     const std::vector<int>& getAtomicNumbers() const;
     void setAtomicNumbers(const std::vector<int>& numbers);
-    const std::vector<std::vector<PointCharge>>& getPointCharges() const;
-    void setPointCharges(const std::vector<std::vector<PointCharge>>& pc);
+    const std::vector<std::vector<XtbPointCharge>>& getPointCharges() const;
+    void setPointCharges(const std::vector<std::vector<XtbPointCharge>>& pc);
     double getPointChargeCutoff() const;
     void setPointChargeCutoff(double cutoff);
     bool hasElectrostaticEmbedding() const;

@@ -122,7 +122,7 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
         boundaryPCNumbers.clear();
         boundaryPCPositions.clear();
 
-        auto chargeGroupInBoundaryRegion = [&](const std::vector<PointCharge>& chargeGroup) {
+        auto chargeGroupInBoundaryRegion = [&](const std::vector<XtbPointCharge>& chargeGroup) {
             for (auto [index, number, charge]: chargeGroup) {
                 for (auto j: indices) {
                     // see https://github.com/openmm/openmm/blob/master/platforms/reference/src/SimTKReference/ReferenceForce.cpp#L80

@@ -1,4 +1,4 @@
-from openmmxtb.openmmxtb import XtbForce, PointCharge
+from openmmxtb.openmmxtb import XtbForce, XtbPointCharge
 
 def _get_forcefield_dir():
     from pkg_resources import resource_filename

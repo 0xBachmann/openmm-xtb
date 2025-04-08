@@ -37,14 +37,14 @@ using namespace XtbPlugin;
 using namespace OpenMM;
 using namespace std;
 
-PointCharge::PointCharge(int index, int number, double charge) : index(index), number(number), charge(charge) {}
+XtbPointCharge::XtbPointCharge(int index, int number, double charge) : index(index), number(number), charge(charge) {}
 
 
 XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const vector<int>& particleIndices, const vector<int>& atomicNumbers) :
         method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(false), particleIndices(particleIndices), atomicNumbers(atomicNumbers) {
 }
 
-XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<PointCharge>>& pointCharges, double pcCutoff) :
+XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, double pcCutoff) :
         method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(true), particleIndices(particleIndices), atomicNumbers(atomicNumbers), pointCharges(pointCharges), pcCutoff(pcCutoff) {
 }
 
@@ -89,11 +89,11 @@ void XtbForce::setAtomicNumbers(const vector<int>& numbers) {
     atomicNumbers = numbers;
 }
 
-const std::vector<std::vector<PointCharge>>& XtbForce::getPointCharges() const {
+const std::vector<std::vector<XtbPointCharge>>& XtbForce::getPointCharges() const {
     return pointCharges;
 }
 
-void XtbForce::setPointCharges(const std::vector<std::vector<PointCharge>>& pc) {
+void XtbForce::setPointCharges(const std::vector<std::vector<XtbPointCharge>>& pc) {
     pointCharges = pc;
 }
 
