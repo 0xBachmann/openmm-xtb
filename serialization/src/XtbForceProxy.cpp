@@ -47,6 +47,7 @@ void XtbForceProxy::serialize(const void* object, SerializationNode& node) const
     node.setDoubleProperty("charge", force.getCharge());
     node.setIntProperty("multiplicity", force.getMultiplicity());
     node.setBoolProperty("periodic", force.usesPeriodicBoundaryConditions());
+    node.setBoolProperty("electrostaticEmbedding", force.hasElectrostaticEmbedding());
     const vector<int>& indices = force.getParticleIndices();
     auto& indicesNode = node.createChildNode("indices");
     for (int i = 0; i < indices.size(); i++)
@@ -55,6 +56,19 @@ void XtbForceProxy::serialize(const void* object, SerializationNode& node) const
     auto& numbersNode = node.createChildNode("numbers");
     for (int i = 0; i < indices.size(); i++)
         numbersNode.createChildNode("particle").setIntProperty("number", numbers[i]);
+    if (force.hasElectrostaticEmbedding()) {
+        node.setDoubleProperty("pcCutoff", force.getPointChargeCutoff());
+        auto& pointChargesNode = node.createChildNode("pointCharges");
+        for (const auto& chargeGroup: force.getPointCharges()) {
+            auto& chargeGroupNode = pointChargesNode.createChildNode("chargeGroup");
+            for (auto [index, number, charge]: chargeGroup) {
+                auto& pcNode = chargeGroupNode.createChildNode("pointCharge");
+                pcNode.setIntProperty("index", index);
+                pcNode.setIntProperty("number", number);
+                pcNode.setDoubleProperty("charge", charge);
+            }
+        }
+    }
 }
 
 void* XtbForceProxy::deserialize(const SerializationNode& node) const {
@@ -66,6 +80,23 @@ void* XtbForceProxy::deserialize(const SerializationNode& node) const {
         indices.push_back(particle.getIntProperty("index"));
     for (const auto& particle: node.getChildNode("numbers").getChildren())
         numbers.push_back(particle.getIntProperty("number"));
+    bool electrostaticEmbedding = node.getBoolProperty("electrostaticEmbedding");
+    if (electrostaticEmbedding) {
+        vector<vector<XtbPointCharge>> pointCharges;
+
+        for (const auto& chargeGroup: node.getChildNode("pointCharges").getChildren()) {
+            std::vector<XtbPointCharge> chrgGroup;
+            for (const auto& pointCharge: chargeGroup.getChildNode("chargeGroup").getChildren()) {
+                chrgGroup.emplace_back(pointCharge.getIntProperty("index"),
+                pointCharge.getIntProperty("number"),
+                pointCharge.getDoubleProperty("charge"));
+            }
+
+        }
+        XtbForce* force = new XtbForce((XtbForce::Method) node.getIntProperty("method"), node.getDoubleProperty("charge"),
+            node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers, pointCharges, node.getDoubleProperty("pcCutoff"));
+        return force;
+    }
     XtbForce* force = new XtbForce((XtbForce::Method) node.getIntProperty("method"), node.getDoubleProperty("charge"),
             node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers);
     return force;
