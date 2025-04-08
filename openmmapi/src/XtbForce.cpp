@@ -90,6 +90,7 @@ void XtbForce::setAtomicNumbers(const vector<int>& numbers) {
 }
 
 const std::vector<std::vector<XtbPointCharge>>& XtbForce::getPointCharges() const {
+    if (!electrostaticEmbedding) throw OpenMMException("No Point Charges have been added");
     return pointCharges;
 }
 
@@ -98,6 +99,7 @@ void XtbForce::setPointCharges(const std::vector<std::vector<XtbPointCharge>>& p
 }
 
 double XtbForce::getPointChargeCutoff() const {
+    if (!electrostaticEmbedding) throw OpenMMException("No Point Charges have been added");
     return pcCutoff;
 }
 
