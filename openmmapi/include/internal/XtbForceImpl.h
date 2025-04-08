@@ -53,6 +53,7 @@ public:
     }
     double computeForce(OpenMM::ContextImpl& context, const std::vector<OpenMM::Vec3>& positions, std::vector<OpenMM::Vec3>& forces);
 private:
+    void updatePCList(OpenMM::ContextImpl& context, const std::vector<OpenMM::Vec3>& positions);
     void checkErrors();
     const XtbForce& owner;
     xtb_TEnvironment env;
@@ -62,8 +63,13 @@ private:
     double charge;
     int multiplicity;
     bool hasInitializedMolecule;
-    std::vector<int> indices, numbers;
-    std::vector<double> positionVec, forceVec;
+    bool electrostaticEmbedding;
+    int numbdpc;
+    double pcCutoff2;
+    std::vector<int> indices, numbers, pcNumbers, pcIndices,
+        bdpcNumbers, bdpcIndices;
+    std::vector<std::vector<int>> chargeGroups;
+    std::vector<double> positionVec, forceVec, pcCharges, bdpcCharges, bdpcPositions, pcForceVec;
 };
 
 } // namespace XtbPlugin

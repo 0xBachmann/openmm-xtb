@@ -68,6 +68,23 @@ public:
      */
     XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers);
     /**
+     * Create a XtbForce.
+     *
+     * @param method           the method to use for computing forces and energy
+     * @param charge           the total charge
+     * @param multiplicity     the spin multiplicity
+     * @param particleIndices  the indices of the particles within the System to which this force should be applied
+     * @param atomicNumbers    the atomic numbers of the particles to which this force should be applied.  This must
+     *                         have the same length as particleIndices.  Element i of this vector is the atomic number
+     *                         of the particle specified by element i of particleIndices.
+     * @param pcIndices        the indices of the particles within the System which should be treated as point charges
+     * @param pcNumbers        the atomic numbers of the point charges
+     * @param pcCharges        the charges of each point charge
+     * @param pcChargeGroups   the charge group index for every point charge
+     * @param pcCutoff         the cutoff whether to treat a point charge in the boundary region
+     */
+    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<int>& pcIndices, const std::vector<int>& pcNumbers, const std::vector<double>& pcCharges, const std::vector<int>& pcChargeGroups, double pcCutoff);
+    /**
      * Get the method to use for computing forces and energy.
      */
     Method getMethod() const;
@@ -107,6 +124,29 @@ public:
      * Set the atomic numbers of the particles this force is applied to.
      */
     void setAtomicNumbers(const std::vector<int>& numbers);
+
+    const std::vector<double>& getPointCharges() const;
+
+    void setPointCharges(const std::vector<double>& charges);
+
+    const std::vector<int>& getPointChargeIndices() const;
+
+    void setPointChargeIndices(const std::vector<int>& indices);
+
+    const std::vector<int>& getPointChargeNumbers() const;
+
+    void setPointChargeNumbers(const std::vector<int>& numbers);
+
+    const std::vector<int>& getChargeGroups() const;
+
+    void setChargeGroups(const std::vector<int>& chargeGroups);
+
+    double getPointChargeCutoff() const;
+
+    void setPointChargeCutoff(double cutoff);
+
+    bool hasElectrostaticEmbedding() const;
+
     /**
      * Get whether this force uses periodic boundary conditions.
      */
@@ -122,7 +162,10 @@ private:
     double charge;
     int multiplicity;
     bool periodic;
-    std::vector<int> particleIndices, atomicNumbers;
+    bool electrostaticEmbedding;
+    double pcCutoff;
+    std::vector<int> particleIndices, atomicNumbers, pcIndices, pcNumbers, pcChargeGroups;
+    std::vector<double> pcCharges;
 };
 
 } // namespace XtbPlugin

@@ -12,11 +12,11 @@
 #include "openmm/RPMDMonteCarloBarostat.h"
 %}
 
-namespace std {
-  %template(vectori) vector<int>;
-};
+%template(vectori) std::vector<int>;
+%template(vectord) std::vector<double>;
 
 namespace XtbPlugin {
+
 
 class XtbForce : public OpenMM::Force {
 public:
@@ -26,6 +26,7 @@ public:
         GFNFF = 2
     };
     XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers);
+    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<int>& pcIndices, const std::vector<int>& pcNumbers, const std::vector<double>& pcCharges, const std::vector<int>& pcChargeGroups, double pcCutoff);
     Method getMethod() const;
     void setMethod(Method method);
     double getCharge() const;
@@ -36,6 +37,17 @@ public:
     void setParticleIndices(const std::vector<int>& indices);
     const std::vector<int>& getAtomicNumbers() const;
     void setAtomicNumbers(const std::vector<int>& numbers);
+    const std::vector<double>& getPointCharges() const;
+    void setPointCharges(const std::vector<double>& charges);
+    const std::vector<int>& getPointChargeIndices() const;
+    void setPointChargeIndices(const std::vector<int>& indices);
+    const std::vector<int>& getPointChargeNumbers() const;
+    void setPointChargeNumbers(const std::vector<int>& numbers);
+    const std::vector<int>& getChargeGroups() const;
+    void setChargeGroups(const std::vector<int>& chargeGroups);
+    double getPointChargeCutoff() const;
+    void setPointChargeCutoff(double cutoff);
+    bool hasElectrostaticEmbedding() const;
     bool usesPeriodicBoundaryConditions() const;
     void setUsesPeriodicBoundaryConditions(bool periodic);
 

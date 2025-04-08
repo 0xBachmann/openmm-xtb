@@ -38,8 +38,13 @@ using namespace OpenMM;
 using namespace std;
 
 XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const vector<int>& particleIndices, const vector<int>& atomicNumbers) :
-        method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), particleIndices(particleIndices), atomicNumbers(atomicNumbers) {
+        method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(false), particleIndices(particleIndices), atomicNumbers(atomicNumbers) {
 }
+
+XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<int>& pcIndices, const std::vector<int>& pcNumbers, const std::vector<double>& pcCharges, const std::vector<int>& pcChargeGroups, double pcCutoff) :
+        method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(true), particleIndices(particleIndices), pcIndices(pcIndices), pcNumbers(pcNumbers), pcChargeGroups(pcChargeGroups), pcCharges(pcCharges), pcCutoff(pcCutoff) {
+}
+
 
 XtbForce::Method XtbForce::getMethod() const {
     return method;
@@ -79,6 +84,50 @@ const vector<int>& XtbForce::getAtomicNumbers() const {
 
 void XtbForce::setAtomicNumbers(const vector<int>& numbers) {
     atomicNumbers = numbers;
+}
+
+const vector<double>& XtbForce::getPointCharges() const {
+    return pcCharges;
+}
+
+void XtbForce::setPointCharges(const vector<double>& charges) {
+    pcCharges = charges;
+}
+
+const vector<int>& XtbForce::getPointChargeIndices() const {
+    return pcIndices;
+}
+
+void XtbForce::setPointChargeIndices(const vector<int>& indices) {
+    pcIndices = indices;
+}
+
+const vector<int>& XtbForce::getPointChargeNumbers() const {
+    return pcNumbers;
+}
+
+void XtbForce::setPointChargeNumbers(const vector<int>& numbers) {
+    pcNumbers = numbers;
+}
+
+const vector<int>& XtbForce::getChargeGroups() const {
+    return pcChargeGroups;
+}
+
+void XtbForce::setChargeGroups(const vector<int>& chargeGroups) {
+    pcChargeGroups = chargeGroups;
+}
+
+double XtbForce::getPointChargeCutoff() const {
+    return pcCutoff;
+}
+
+void XtbForce::setPointChargeCutoff(double cutoff) {
+    pcCutoff = cutoff;
+}
+
+bool XtbForce::hasElectrostaticEmbedding() const {
+    return electrostaticEmbedding;
 }
 
 bool XtbForce::usesPeriodicBoundaryConditions() const {
