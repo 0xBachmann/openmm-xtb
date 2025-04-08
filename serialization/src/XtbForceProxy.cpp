@@ -86,11 +86,12 @@ void* XtbForceProxy::deserialize(const SerializationNode& node) const {
 
         for (const auto& chargeGroup: node.getChildNode("pointCharges").getChildren()) {
             std::vector<XtbPointCharge> chrgGroup;
-            for (const auto& pointCharge: chargeGroup.getChildNode("chargeGroup").getChildren()) {
+            for (const auto& pointCharge: chargeGroup.getChildren()) {
                 chrgGroup.emplace_back(pointCharge.getIntProperty("index"),
                 pointCharge.getIntProperty("number"),
                 pointCharge.getDoubleProperty("charge"));
             }
+            pointCharges.push_back(chrgGroup);
 
         }
         XtbForce* force = new XtbForce((XtbForce::Method) node.getIntProperty("method"), node.getDoubleProperty("charge"),

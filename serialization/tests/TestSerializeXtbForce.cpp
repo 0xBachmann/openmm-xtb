@@ -64,10 +64,43 @@ void testSerialization() {
     ASSERT_EQUAL_CONTAINERS(force.getAtomicNumbers(), force2.getAtomicNumbers());
 }
 
+void testSerializationEE() {
+    // Create a Force.
+
+    XtbForce force(XtbForce::GFN2xTB, 1.0, 3, true, {0, 1, 2}, {8, 1, 1}, {{{3, 8, -0.8}, {4, 1, 0.4}, {5, 1, 0.4}}}, 1.2);
+
+    // Serialize and then deserialize it.
+
+    stringstream buffer;
+    XmlSerializer::serialize<XtbForce>(&force, "Force", buffer);
+    XtbForce* copy = XmlSerializer::deserialize<XtbForce>(buffer);
+
+    // Compare the two forces to see if they are identical.
+
+    XtbForce& force2 = *copy;
+    ASSERT_EQUAL(force.getMethod(), force2.getMethod());
+    ASSERT_EQUAL(force.getCharge(), force2.getCharge());
+    ASSERT_EQUAL(force.getMultiplicity(), force2.getMultiplicity());
+    ASSERT_EQUAL(force.usesPeriodicBoundaryConditions(), force2.usesPeriodicBoundaryConditions());
+    ASSERT_EQUAL_CONTAINERS(force.getParticleIndices(), force2.getParticleIndices());
+    ASSERT_EQUAL_CONTAINERS(force.getAtomicNumbers(), force2.getAtomicNumbers());
+    for (unsigned i = 0; i < force.getPointCharges().size(); i++) {
+        for (unsigned j = 0; j < force.getPointCharges()[i].size(); j++) {
+            ASSERT_EQUAL(force.getPointCharges()[i][j].index, force2.getPointCharges()[i][j].index);
+            ASSERT_EQUAL(force.getPointCharges()[i][j].number, force2.getPointCharges()[i][j].number);
+            ASSERT_EQUAL_TOL(force.getPointCharges()[i][j].charge, force2.getPointCharges()[i][j].charge, 1e-10);
+        }
+    }
+    ASSERT_EQUAL(force.getPointChargeCutoff(), force2.getPointChargeCutoff());
+}
+
+
+
 int main() {
     try {
         registerXtbSerializationProxies();
         testSerialization();
+        testSerializationEE();
     }
     catch(const exception& e) {
         cout << "exception: " << e.what() << endl;
