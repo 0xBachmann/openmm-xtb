@@ -66,7 +66,7 @@ private:
     bool electrostaticEmbedding;
     int numBoundaryPC;
     double pcCutoff2;
-    std::vector<int> indices, numbers, boundaryPCNumbers, boundaryPCIndices;
+    std::vector<int> indices, numbers, boundaryPCNumbers, boundaryPCIndices, qmParticleIndices;
     std::vector<std::vector<XtbPointCharge>> pointCharges;
     std::vector<double> positionVec, forceVec, boundaryPCCharges, boundaryPCPositions, pcForceVec;
 };

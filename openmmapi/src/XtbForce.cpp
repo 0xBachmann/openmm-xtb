@@ -44,8 +44,8 @@ XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, boo
         method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(false), particleIndices(particleIndices), atomicNumbers(atomicNumbers) {
 }
 
-XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, double pcCutoff) :
-        method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(true), particleIndices(particleIndices), atomicNumbers(atomicNumbers), pointCharges(pointCharges), pcCutoff(pcCutoff) {
+XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, const std::vector<int>& qmParticleIndices, double pcCutoff) :
+        method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(true), particleIndices(particleIndices), atomicNumbers(atomicNumbers), pointCharges(pointCharges), qmParticleIndices(qmParticleIndices), pcCutoff(pcCutoff) {
 }
 
 
@@ -96,6 +96,15 @@ const std::vector<std::vector<XtbPointCharge>>& XtbForce::getPointCharges() cons
 
 void XtbForce::setPointCharges(const std::vector<std::vector<XtbPointCharge>>& pc) {
     pointCharges = pc;
+}
+
+const std::vector<int>& XtbForce::getQMParticleIndices() const {
+    if (!electrostaticEmbedding) throw OpenMMException("No Point Charges have been added");
+    return qmParticleIndices;
+}
+
+void XtbForce::setQMParticleIndices(const std::vector<int>& qmIndices) {
+    qmParticleIndices = qmIndices;
 }
 
 double XtbForce::getPointChargeCutoff() const {

@@ -63,7 +63,7 @@ void XtbForceImpl::initialize(ContextImpl& context) {
     electrostaticEmbedding = owner.hasElectrostaticEmbedding();
     if (electrostaticEmbedding) {
         pointCharges = owner.getPointCharges();
-
+        qmParticleIndices = owner.getQMParticleIndices();
         pcCutoff2 = std::pow(owner.getPointChargeCutoff(), 2);
 
         if (owner.getMethod() == XtbForce::GFNFF) {
@@ -122,13 +122,13 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
         boundaryPCNumbers.clear();
         boundaryPCPositions.clear();
 
-        auto chargeGroupInBoundaryRegion = [&](const std::vector<XtbPointCharge>& chargeGroup) {
+        auto chargeGroupInBoundaryRegion = [&, periodic = owner.usesPeriodicBoundaryConditions()](const std::vector<XtbPointCharge>& chargeGroup) {
             for (auto [index, number, charge]: chargeGroup) {
-                for (auto j: indices) {
+                for (auto j: qmParticleIndices) {
                     // see https://github.com/openmm/openmm/blob/master/platforms/reference/src/SimTKReference/ReferenceForce.cpp#L80
                     // works only for cubic boxes
                     Vec3 diff = positions[index] - positions[j];
-                    if (owner.usesPeriodicBoundaryConditions()) {
+                    if (periodic) {
                         const Vec3 base(std::floor(diff[0] / box[0][0] + 0.5) * box[0][0],
                                         std::floor(diff[1] / box[1][1] + 0.5) * box[1][1],
                                         std::floor(diff[2] / box[2][2] + 0.5) * box[2][2]);

@@ -86,9 +86,10 @@ public:
      *                         of the particle specified by element i of particleIndices.
      * @param pointCharges     contains the pointcharges grouped into charge groups. each pointcharge consists of the
      *                         index, atomic number and charge
+     * @param qmParticleIndices the indices of all qm particles, required to compute the boundary region
      * @param pcCutoff         the cutoff whether to treat a point charge in the boundary region
      */
-    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, double pcCutoff);
+    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, const std::vector<int>& qmParticleIndices, double pcCutoff);
     /**
      * Get the method to use for computing forces and energy.
      */
@@ -134,6 +135,10 @@ public:
 
     void setPointCharges(const std::vector<std::vector<XtbPointCharge>>& pc);
 
+    const std::vector<int>& getQMParticleIndices() const;
+
+    void setQMParticleIndices(const std::vector<int>& qmIndices);
+
     double getPointChargeCutoff() const;
 
     void setPointChargeCutoff(double cutoff);
@@ -157,7 +162,7 @@ private:
     bool periodic;
     bool electrostaticEmbedding;
     double pcCutoff;
-    std::vector<int> particleIndices, atomicNumbers;
+    std::vector<int> particleIndices, atomicNumbers, qmParticleIndices;
     std::vector<std::vector<XtbPointCharge>> pointCharges;
 };
 

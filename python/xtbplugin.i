@@ -49,7 +49,7 @@ public:
         GFNFF = 2
     };
     XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers);
-    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, double pcCutoff);
+    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, const std::vector<int>& qmParticleIndices, double pcCutoff);
     Method getMethod() const;
     void setMethod(Method method);
     double getCharge() const;
@@ -62,6 +62,8 @@ public:
     void setAtomicNumbers(const std::vector<int>& numbers);
     const std::vector<std::vector<XtbPointCharge>>& getPointCharges() const;
     void setPointCharges(const std::vector<std::vector<XtbPointCharge>>& pc);
+    const std::vector<int>& getQMParticleIndices() const;
+    void setQMParticleIndices(const std::vector<int>& qmIndices);
     double getPointChargeCutoff() const;
     void setPointChargeCutoff(double cutoff);
     bool hasElectrostaticEmbedding() const;
