@@ -43,6 +43,8 @@ XtbForceProxy::XtbForceProxy() : SerializationProxy("XtbForce") {
 void XtbForceProxy::serialize(const void* object, SerializationNode& node) const {
     node.setIntProperty("version", 0);
     const XtbForce& force = *reinterpret_cast<const XtbForce*>(object);
+    node.setIntProperty("forceGroup", force.getForceGroup());
+    node.setStringProperty("name", force.getName());
     node.setIntProperty("method", (int) force.getMethod());
     node.setDoubleProperty("charge", force.getCharge());
     node.setIntProperty("multiplicity", force.getMultiplicity());
@@ -68,6 +70,10 @@ void XtbForceProxy::serialize(const void* object, SerializationNode& node) const
                 pcNode.setDoubleProperty("charge", charge);
             }
         }
+        const vector<int>& qmIndices = force.getQMParticleIndices();
+        auto& qmParticleIndicesNode = node.createChildNode("qmIndices");
+        for (int i = 0; i < qmIndices.size(); i++)
+            qmParticleIndicesNode.createChildNode("particle").setIntProperty("index", qmIndices[i]);
     }
 }
 
@@ -75,12 +81,14 @@ void* XtbForceProxy::deserialize(const SerializationNode& node) const {
     const int version = node.getIntProperty("version");
     if (version != 0)
         throw OpenMMException("Unsupported version number");
+
     vector<int> indices, numbers;
     for (const auto& particle: node.getChildNode("indices").getChildren())
         indices.push_back(particle.getIntProperty("index"));
     for (const auto& particle: node.getChildNode("numbers").getChildren())
         numbers.push_back(particle.getIntProperty("number"));
     bool electrostaticEmbedding = node.getBoolProperty("electrostaticEmbedding");
+    XtbForce *force = nullptr;
     if (electrostaticEmbedding) {
         vector<vector<XtbPointCharge>> pointCharges;
 
@@ -94,11 +102,17 @@ void* XtbForceProxy::deserialize(const SerializationNode& node) const {
             pointCharges.push_back(chrgGroup);
 
         }
-        XtbForce* force = new XtbForce((XtbForce::Method) node.getIntProperty("method"), node.getDoubleProperty("charge"),
-            node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers, pointCharges, node.getDoubleProperty("pcCutoff"));
-        return force;
+        vector<int> qmIndices;
+        for (const auto& particle: node.getChildNode("qmIndices").getChildren()) {
+            qmIndices.push_back(particle.getIntProperty("index"));
+        }
+        force = new XtbForce((XtbForce::Method) node.getIntProperty("method"), node.getDoubleProperty("charge"),
+            node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers, pointCharges, qmIndices, node.getDoubleProperty("pcCutoff"));
+    } else {
+        force = new XtbForce((XtbForce::Method) node.getIntProperty("method"), node.getDoubleProperty("charge"),
+                node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers);
     }
-    XtbForce* force = new XtbForce((XtbForce::Method) node.getIntProperty("method"), node.getDoubleProperty("charge"),
-            node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers);
+    force->setForceGroup(node.getIntProperty("forceGroup", 0));
+    force->setName(node.getStringProperty("name", force->getName()));
     return force;
 }

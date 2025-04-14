@@ -67,7 +67,7 @@ void testSerialization() {
 void testSerializationEE() {
     // Create a Force.
 
-    XtbForce force(XtbForce::GFN2xTB, 1.0, 3, true, {0, 1, 2}, {8, 1, 1}, {{{3, 8, -0.8}, {4, 1, 0.4}, {5, 1, 0.4}}}, 1.2);
+    XtbForce force(XtbForce::GFN2xTB, 1.0, 3, true, {0, 1, 2}, {8, 1, 1}, {{{3, 8, -0.8}, {4, 1, 0.4}, {5, 1, 0.4}}}, {0, 1, 2}, 1.2);
 
     // Serialize and then deserialize it.
 
