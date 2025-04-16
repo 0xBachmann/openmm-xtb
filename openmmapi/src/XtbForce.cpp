@@ -37,15 +37,26 @@ using namespace XtbPlugin;
 using namespace OpenMM;
 using namespace std;
 
-XtbPointCharge::XtbPointCharge(int index, int number, double charge) : index(index), number(number), charge(charge) {}
-
-
-XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const vector<int>& particleIndices, const vector<int>& atomicNumbers) :
-        method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(false), particleIndices(particleIndices), atomicNumbers(atomicNumbers) {
+XtbPointCharge::XtbPointCharge(int index, int number, double charge) : index(index), number(number), charge(charge) {
 }
 
-XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, const std::vector<int>& qmParticleIndices, double pcCutoff) :
-        method(method), charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(true), particleIndices(particleIndices), atomicNumbers(atomicNumbers), pointCharges(pointCharges), qmParticleIndices(qmParticleIndices), pcCutoff(pcCutoff) {
+
+XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic,
+                   const vector<int> &particleIndices, const vector<int> &atomicNumbers) : method(method),
+    charge(charge), multiplicity(multiplicity), periodic(periodic), electrostaticEmbedding(false),
+    particleIndices(particleIndices), atomicNumbers(atomicNumbers) {
+}
+
+XtbForce::XtbForce(XtbForce::Method method, double charge, int multiplicity, bool periodic,
+                   const std::vector<int> &particleIndices, const std::vector<int> &atomicNumbers,
+                   const std::vector<std::vector<XtbPointCharge> > &pointCharges,
+                   const std::vector<int> &qmParticleIndices, double pcCutoff,
+                   int boundaryUpdateFrequency) : method(method), charge(charge), multiplicity(multiplicity),
+                                                          periodic(periodic), electrostaticEmbedding(true),
+                                                          particleIndices(particleIndices),
+                                                          atomicNumbers(atomicNumbers), pointCharges(pointCharges),
+                                                          qmParticleIndices(qmParticleIndices), pcCutoff(pcCutoff),
+                                                          boundaryUpdateFrequency(boundaryUpdateFrequency) {
 }
 
 
@@ -73,37 +84,37 @@ void XtbForce::setMultiplicity(int multiplicity) {
     this->multiplicity = multiplicity;
 }
 
-const vector<int>& XtbForce::getParticleIndices() const {
+const vector<int> &XtbForce::getParticleIndices() const {
     return particleIndices;
 }
 
-void XtbForce::setParticleIndices(const vector<int>& indices) {
+void XtbForce::setParticleIndices(const vector<int> &indices) {
     particleIndices = indices;
 }
 
-const vector<int>& XtbForce::getAtomicNumbers() const {
+const vector<int> &XtbForce::getAtomicNumbers() const {
     return atomicNumbers;
 }
 
-void XtbForce::setAtomicNumbers(const vector<int>& numbers) {
+void XtbForce::setAtomicNumbers(const vector<int> &numbers) {
     atomicNumbers = numbers;
 }
 
-const std::vector<std::vector<XtbPointCharge>>& XtbForce::getPointCharges() const {
+const std::vector<std::vector<XtbPointCharge> > &XtbForce::getPointCharges() const {
     if (!electrostaticEmbedding) throw OpenMMException("No Point Charges have been added");
     return pointCharges;
 }
 
-void XtbForce::setPointCharges(const std::vector<std::vector<XtbPointCharge>>& pc) {
+void XtbForce::setPointCharges(const std::vector<std::vector<XtbPointCharge> > &pc) {
     pointCharges = pc;
 }
 
-const std::vector<int>& XtbForce::getQMParticleIndices() const {
+const std::vector<int> &XtbForce::getQMParticleIndices() const {
     if (!electrostaticEmbedding) throw OpenMMException("No Point Charges have been added");
     return qmParticleIndices;
 }
 
-void XtbForce::setQMParticleIndices(const std::vector<int>& qmIndices) {
+void XtbForce::setQMParticleIndices(const std::vector<int> &qmIndices) {
     qmParticleIndices = qmIndices;
 }
 
@@ -120,6 +131,15 @@ bool XtbForce::hasElectrostaticEmbedding() const {
     return electrostaticEmbedding;
 }
 
+int XtbForce::getBoundaryUpdateFrequency() const {
+    if (!electrostaticEmbedding) throw OpenMMException("No Point Charges have been added");
+    return boundaryUpdateFrequency;
+}
+
+void XtbForce::setBoundaryUpdateFrequency(int frequency) {
+    boundaryUpdateFrequency = frequency;
+}
+
 bool XtbForce::usesPeriodicBoundaryConditions() const {
     return periodic;
 }
@@ -128,6 +148,6 @@ void XtbForce::setUsesPeriodicBoundaryConditions(bool periodic) {
     this->periodic = periodic;
 }
 
-ForceImpl* XtbForce::createImpl() const {
+ForceImpl *XtbForce::createImpl() const {
     return new XtbForceImpl(*this);
 }
