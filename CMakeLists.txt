@@ -5,7 +5,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 
 # We need to know where OpenMM is installed so we can access the headers and libraries.
-SET(OPENMM_DIR "${CONDA_ROOT}" CACHE PATH "Where OpenMM is installed")
+SET(OPENMM_DIR "${OPENMM_ROOT}" CACHE PATH "Where OpenMM is installed")
 INCLUDE_DIRECTORIES("${OPENMM_DIR}/include")
 message("OpenMM: ${OPENMM_DIR}")
 LINK_DIRECTORIES("${OPENMM_DIR}/lib" "${OPENMM_DIR}/lib/plugins")
@@ -13,14 +13,14 @@ LINK_DIRECTORIES("${OPENMM_DIR}/lib" "${OPENMM_DIR}/lib/plugins")
 # We also need to know where XTB is installed.
 FIND_FILE(XTB_HEADER_PATH xtb.h
         PATHS
-        "${CONDA_ROOT}/include"
-        "${CONDA_ROOT}/include/xtb"
+        "${XTB_ROOT}/include"
+        "${XTB_ROOT}/include/xtb"
         NO_DEFAULT_PATH
 )
 FIND_LIBRARY(XTB_LIBRARY_PATH xtb
         PATHS
-        "${CONDA_ROOT}/lib"
-        "${CONDA_ROOT}/lib/xtb"
+        "${XTB_ROOT}/lib"
+        "${XTB_ROOT}/lib/xtb"
         NO_DEFAULT_PATH
 )
 CMAKE_PATH(GET XTB_LIBRARY_PATH PARENT_PATH XTB_LIBRARY_DIR)
@@ -42,7 +42,7 @@ IF(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
     IF(WIN32)
         SET(CMAKE_INSTALL_PREFIX "$ENV{ProgramFiles}/OpenMM" CACHE PATH "Where to install the plugin" FORCE)
     ELSE(WIN32)
-        SET(CMAKE_INSTALL_PREFIX "${CONDA_ROOT}" CACHE PATH "Where to install the plugin" FORCE)
+        SET(CMAKE_INSTALL_PREFIX "${INSTALL_ROOT}" CACHE PATH "Where to install the plugin" FORCE)
     ENDIF(WIN32)
 ENDIF(${CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT})
 
@@ -106,14 +106,14 @@ ADD_SUBDIRECTORY(serialization/tests)
 #FIND_PROGRAM(PIP_EXECUTABLE pip)
 FIND_PROGRAM(PYTHON_EXECUTABLE python
         PATHS
-        "${CONDA_ROOT}/bin"
-        "${CONDA_ROOT}/envs/*/bin"
+        "${PYTHON_ROOT}/bin"
+        "${PYTHON_ROOT}/envs/*/bin"
         NO_DEFAULT_PATH)
 
 FIND_PROGRAM(PIP_EXECUTABLE pip
         PATHS
-        "${CONDA_ROOT}/bin"
-        "${CONDA_ROOT}/envs/*/bin"
+        "${PYTHON_ROOT}/bin"
+        "${PYTHON_ROOT}/envs/*/bin"
         NO_DEFAULT_PATH)
 
 FIND_PROGRAM(SWIG_EXECUTABLE swig)
