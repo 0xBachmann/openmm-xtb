@@ -38,6 +38,9 @@
 #include <vector>
 
 namespace XtbPlugin {
+    /**
+    * Utility structure to help interfacing with python when setting external charges.
+    */
     struct XtbPointCharge {
         XtbPointCharge(int index, int number, double charge);
 
@@ -69,6 +72,7 @@ namespace XtbPlugin {
          * @param method           the method to use for computing forces and energy
          * @param charge           the total charge
          * @param multiplicity     the spin multiplicity
+         * @param periodic         whether to use periodic boundary conditions TODO currently only false works?
          * @param particleIndices  the indices of the particles within the System to which this force should be applied
          * @param atomicNumbers    the atomic numbers of the particles to which this force should be applied.  This must
          *                         have the same length as particleIndices.  Element i of this vector is the atomic number
@@ -83,6 +87,7 @@ namespace XtbPlugin {
          * @param method           the method to use for computing forces and energy
          * @param charge           the total charge
          * @param multiplicity     the spin multiplicity
+         * @param periodic         whether to use periodic boundary conditions TODO currently only false works?
          * @param particleIndices  the indices of the particles within the System to which this force should be applied
          * @param atomicNumbers    the atomic numbers of the particles to which this force should be applied.  This must
          *                         have the same length as particleIndices.  Element i of this vector is the atomic number
@@ -95,7 +100,7 @@ namespace XtbPlugin {
          */
         XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int> &particleIndices,
                  const std::vector<int> &atomicNumbers, const std::vector<std::vector<XtbPointCharge> > &pointCharges,
-                 const std::vector<int> &qmParticleIndices, double pcCutoff, int boundaryUpdateFrequency=1);
+                 const std::vector<int> &qmParticleIndices, double pcCutoff, int boundaryUpdateFrequency = 1);
 
         /**
          * Get the method to use for computing forces and energy.
@@ -147,23 +152,51 @@ namespace XtbPlugin {
          */
         void setAtomicNumbers(const std::vector<int> &numbers);
 
+        /**
+         * Get the point charges which are considered in the force.
+         */
         const std::vector<std::vector<XtbPointCharge> > &getPointCharges() const;
 
+        /**
+         * Set the point charges which are considered in the force.
+         */
         void setPointCharges(const std::vector<std::vector<XtbPointCharge> > &pc);
 
+        /**
+         * Get the indices of all particles treated in the qm zone, not only by this force (for consistent boundary).
+         */
         const std::vector<int> &getQMParticleIndices() const;
 
+        /**
+         * Set the indices of all particles treated in the qm zone, not only by this force (for consistent boundary).
+         */
         void setQMParticleIndices(const std::vector<int> &qmIndices);
 
+        /**
+         * Get the cutoff (in nm) to select boundary point charges.
+         */
         double getPointChargeCutoff() const;
 
+        /**
+         * Set the cutoff (in nm) to select boundary point charges.
+         */
         void setPointChargeCutoff(double cutoff);
 
+        /**
+         * Query whether this force has point charges.
+         */
         bool hasElectrostaticEmbedding() const;
 
+        /**
+         * Get every how many force calculations the boundary point charges are updated.
+         */
         int getBoundaryUpdateFrequency() const;
 
+        /**
+         * Set every how many force calculations the boundary point charges are updated.
+         */
         void setBoundaryUpdateFrequency(int frequency);
+
         /**
          * Get whether this force uses periodic boundary conditions.
          */

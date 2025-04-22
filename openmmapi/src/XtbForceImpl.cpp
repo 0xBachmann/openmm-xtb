@@ -54,6 +54,7 @@ XtbForceImpl::~XtbForceImpl() {
 
 void XtbForceImpl::initialize(ContextImpl& context) {
     CustomCPPForceImpl::initialize(context);
+    // get properties from owner
     indices = owner.getParticleIndices();
     numbers = owner.getAtomicNumbers();
     if (indices.size() != numbers.size())
@@ -72,6 +73,7 @@ void XtbForceImpl::initialize(ContextImpl& context) {
             throw OpenMMException("GFNFF method does not support external charges");
         }
     }
+    // setup xtb env
     env = xtb_newEnvironment();
     calc = xtb_newCalculator();
     res = xtb_newResults();
@@ -151,7 +153,7 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
                 return false;
             };
 
-
+// TODO #omp parallel for here? probably not as the force are beeing computed in parallel
             for (const auto& chargeGroup : pointCharges) {
                 if (chargeGroupInBoundaryRegion(chargeGroup)) {
                     for (auto [index, number, charge]: chargeGroup) {

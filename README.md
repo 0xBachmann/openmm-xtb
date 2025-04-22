@@ -9,40 +9,19 @@ This plugin requires XTB and OpenMM 8.1 or later.
 Installation
 ============
 
-The easiest way to install this package along with all dependencies is with the conda or mamba package manager.
+The easiest is to install the plugin into a conda environment which has already installed `openmm` and `xtb(-python)`. 
+Then the provided installation script can be used, which builds, tests and installs the plugin:
 
+```bash
+# Use default EDS_OpenMM environment
+./build_test_install.sh
+
+# Use a specific conda environment
+./build_test_install.sh my_env
+
+# Skip conda and specify custom paths
+./build_test_install.sh --no-conda /path/to/openmm /path/to/xtb /install/path /path/to/python
 ```
-mamba install -c conda-forge openmm-xtb
-```
-
-Building From Source
-====================
-
-This project uses [CMake](http://www.cmake.org) for its build system.  To build it, follow these
-steps:
-
-1. Create a directory in which to build the plugin.
-
-2. Run the CMake GUI or ccmake, specifying your new directory as the build directory and the top
-level directory of this project as the source directory.
-
-3. Press "Configure".
-
-4. Set OPENMM_DIR to point to the directory where OpenMM is installed.  This is needed to locate
-the OpenMM header files and libraries.  If OpenMM was installed with conda, this should be the root
-directory of the conda environment.
-
-6. Set XTB_INCLUDE_DIR and XTB_LIBRARY_DIR to point to the directories where the XTB header
-files and libraries are installed.
-
-7. Set CMAKE_INSTALL_PREFIX to the directory where the plugin should be installed.  Usually,
-this will be the same as OPENMM_DIR, so the plugin will be added to your OpenMM installation.
-
-8. Press "Configure" again if necessary, then press "Generate".
-
-9. Use the build system you selected to build and install the plugin.  For example, if you
-selected Unix Makefiles, type `make install` to install the plugin, and `make PythonInstall` to
-install the Python wrapper.
 
 Using The Plugin
 ================
@@ -55,7 +34,7 @@ Creating a Force Directly
 
 This is the most general and flexible approach, giving complete control over all aspects.  For example, you can use
 XTB to compute forces on some parts of the system but a classical force field to compute the forces on other parts.
-To use this method, simply create a `XtbForce` object and add it to your `System`.  For example,
+To use this method, simply create a `XtbForce` object and add it to your `System`.  For example to create a force with no point charges,
 
 ```Python
 from openmmxtb import XtbForce
@@ -74,11 +53,32 @@ The arguments are as follows.
    have the same length as `particleIndices`.  Element `i` is the atomic number of the particle specified by element
   `i` of `particleIndices`.
 
+To create a force with point charges:
+
+```Python
+from openmmxtb import XtbForce
+systm.addForce(XtbForce(XtbForce.GFN2xTB, 0.0, 1, False, particleIndices, atomicNumbers, point_charges, qm_region_indices, cutoff_radius)
+```
+
+The arguments are as above with the additional
+- `point_charges`: a list of lists of `XtbPointCharge`s of all the point charges to consider. The list is grouped into 
+    charge groups. I.e. element `i` of `point_charges` is a list of `XtbPointCharge`s which is one charge group
+- `qm_region_indices`: indices of all particles treated in the qm zone. possibly by other forces as well. this is required
+    to have consistent boundary region between different forces
+- `cutoff`: the cutoff whether to include point charges in the boundary region. Currently charge group based cutoff is 
+    implemented, i.e. if any particle of a charge group is within the cutoff, the whole charge group is used as external charges.
+
+`XtbPointCharge` consists of index, atomic number and charge of a particle and can be created as
+```Python
+from openmmxtb import XtbPointCharge
+pointCharge = XtbPointCharge(particleIndex, atomicNumber, particleCharge)
+```
+
 Using a ForceField
 ------------------
 
 The above method requires you to create the `System` yourself, add particles to it, and build the lists of particle indices
-and atomic numbers.  In simple cases where you want to use XTB as the only force for the entire system, it can be easier
+and atomic numbers.  In simple cases where you want to use XTB without external point charges as the only force for the entire system, it can be easier
 to let a `ForceField` create the `System` for you.
 
 ```python
