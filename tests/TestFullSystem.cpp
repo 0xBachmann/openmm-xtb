@@ -49,7 +49,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <format>
+#include <fmt/format.h>
 #include <ranges>
 #include <memory>
 
@@ -119,19 +119,19 @@ CustomIntegrator qmedsIntegrator(size_t num_endstates) {
     integrator.addGlobalVariable("VR", 1.0);
     // integrator.addGlobalVariable("WR", 1.0)
     for (size_t i = 0; i < num_endstates; ++i) {
-        integrator.addGlobalVariable(std::format("V{}_vac", i), 1.0);
-        integrator.addComputeGlobal(std::format("V{}_vac", i), std::format("energy{}", num_endstates + 1 + i));
-        integrator.addGlobalVariable(std::format("V{}_ee", i), 1.0);
-        integrator.addComputeGlobal(std::format("V{}_ee", i), std::format("energy{}", 2 * num_endstates + 1 + i));
-        integrator.addGlobalVariable(std::format("V{}_vdw", i), 1.0);
-        integrator.addComputeGlobal(std::format("V{}_vdw", i), std::format("energy{}", 1 + i));
-        integrator.addGlobalVariable(std::format("V{}", i), 1.0);
-        integrator.addComputeGlobal(std::format("V{}", i), std::format("V{}_ee - V{}_vac + V{}_vdw", i, i, i));
+        integrator.addGlobalVariable(fmt::format("V{}_vac", i), 1.0);
+        integrator.addComputeGlobal(fmt::format("V{}_vac", i), fmt::format("energy{}", num_endstates + 1 + i));
+        integrator.addGlobalVariable(fmt::format("V{}_ee", i), 1.0);
+        integrator.addComputeGlobal(fmt::format("V{}_ee", i), fmt::format("energy{}", 2 * num_endstates + 1 + i));
+        integrator.addGlobalVariable(fmt::format("V{}_vdw", i), 1.0);
+        integrator.addComputeGlobal(fmt::format("V{}_vdw", i), fmt::format("energy{}", 1 + i));
+        integrator.addGlobalVariable(fmt::format("V{}", i), 1.0);
+        integrator.addComputeGlobal(fmt::format("V{}", i), fmt::format("V{}_ee - V{}_vac + V{}_vdw", i, i, i));
 
-        // integrator.addGlobalVariable(std::format("V{i}", 1.0)
+        // integrator.addGlobalVariable(fmt::format("V{i}", 1.0)
         // integrator.addComputeGlobal(f"V{i}", f"energy{i + 1}");
-        integrator.addGlobalVariable(std::format("v_eff{}", i), 1.0);
-        integrator.addComputeGlobal(std::format("v_eff{}", i), std::format("V{}-eoff{}", i, i));
+        integrator.addGlobalVariable(fmt::format("v_eff{}", i), 1.0);
+        integrator.addComputeGlobal(fmt::format("v_eff{}", i), fmt::format("V{}-eoff{}", i, i));
 
     }
 
@@ -148,36 +148,36 @@ CustomIntegrator qmedsIntegrator(size_t num_endstates) {
 
 
         for (size_t i = 2; i < num_endstates; ++i) {
-            integrator.addGlobalVariable(std::format("part{}", i), 1.0);
-            integrator.addComputeGlobal(std::format("part{}", i), std::format("-beta * s * v_eff{}", i));
-            integrator.addComputeGlobal("maxpart", std::format("max(maxpart, part{})", i));
+            integrator.addGlobalVariable(fmt::format("part{}", i), 1.0);
+            integrator.addComputeGlobal(fmt::format("part{}", i), fmt::format("-beta * s * v_eff{}", i));
+            integrator.addComputeGlobal("maxpart", fmt::format("max(maxpart, part{})", i));
         }
 
         integrator.addGlobalVariable("logsumexp", 1.0);
-        integrator.addComputeGlobal("logsumexp", std::format("maxpart + log({});", [&]() {
+        integrator.addComputeGlobal("logsumexp", fmt::format("maxpart + log({});", [&]() {
             std::string sum = "exp(part0-maxpart)";
             for (size_t i = 1; i < num_endstates; ++i) {
-                sum += std::format("+exp(part{}-maxpart)", i);
+                sum += fmt::format("+exp(part{}-maxpart)", i);
             }
             return sum;
         }()));
         integrator.addComputeGlobal("VR", "-1/(beta*s) * logsumexp");
 
         for (size_t i = 0; i < num_endstates; ++i) {
-            integrator.addGlobalVariable(std::format("scal_{}", i), 1.0);
-            integrator.addComputeGlobal(std::format("scal_{}", i), std::format("exp(part{}-logsumexp)", i));
+            integrator.addGlobalVariable(fmt::format("scal_{}", i), 1.0);
+            integrator.addComputeGlobal(fmt::format("scal_{}", i), fmt::format("exp(part{}-logsumexp)", i));
         }
     }
     // B A O A (or LFMiddle);
     integrator.addComputePerDof("v", "v + dt*f0/m");
     for (size_t i = 1; i < num_endstates; ++i) {
-        // integrator.addComputePerDof("v", std::format("v + dt * scal_{i - 1} * f{i}/m");
-        integrator.addComputePerDof("v", std::format("v + dt * f{} / m", num_endstates + i));   // V_vac forces
-        integrator.addComputePerDof("v", std::format("v + dt * scal_{} * f{} / m", i - 1,
+        // integrator.addComputePerDof("v", fmt::format("v + dt * scal_{i - 1} * f{i}/m");
+        integrator.addComputePerDof("v", fmt::format("v + dt * f{} / m", num_endstates + i));   // V_vac forces
+        integrator.addComputePerDof("v", fmt::format("v + dt * scal_{} * f{} / m", i - 1,
                                                      2 * num_endstates + i));    // V_ee forces
-        integrator.addComputePerDof("v", std::format("v - dt * scal_{} * f{} / m", i - 1,
+        integrator.addComputePerDof("v", fmt::format("v - dt * scal_{} * f{} / m", i - 1,
                                                      num_endstates + i));    // -V_vac forces
-        integrator.addComputePerDof("v", std::format("v + dt * scal_{} * f{} / m", i - 1, i));   // V_vdW forces
+        integrator.addComputePerDof("v", fmt::format("v + dt * scal_{} * f{} / m", i - 1, i));   // V_vdW forces
     }
     integrator.addConstrainVelocities();
     integrator.addComputePerDof("x", "x + 0.5*dt*v");
@@ -208,7 +208,7 @@ void testSetA(Platform &platform) {
     // Simulate it and make sure that the geometry remains reasonable.
     constexpr size_t num_steps = 100;
     for (std::size_t i: std::ranges::iota_view(0u, num_steps)) {
-        std::cout << std::format("\r{}/{}", i+1, num_steps) << std::flush;
+        std::cout << fmt::format("\r{}/{}", i+1, num_steps) << std::flush;
         integrator.step(1);
     }
     std::cout << "\n";

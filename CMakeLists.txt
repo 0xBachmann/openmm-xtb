@@ -2,7 +2,7 @@
 # OpenMM XTB Plugin
 #----------------------------------------------------
 
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.14)
 
 # We need to know where OpenMM is installed so we can access the headers and libraries.
 SET(OPENMM_DIR "${OPENMM_ROOT}" CACHE PATH "Where OpenMM is installed")
