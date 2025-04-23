@@ -68,6 +68,7 @@ private:
     std::vector<int> indices, numbers, boundaryPCNumbers, boundaryPCIndices, qmParticleIndices;
     std::vector<std::vector<XtbPointCharge>> pointCharges;
     std::vector<double> positionVec, forceVec, boundaryPCCharges, boundaryPCPositions, pcForceVec;
+    int boundaryUpdateFrequency, stepSinceLastBoundaryUpdate;
 };
 
 } // namespace XtbPlugin

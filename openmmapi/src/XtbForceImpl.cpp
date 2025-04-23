@@ -54,6 +54,7 @@ XtbForceImpl::~XtbForceImpl() {
 
 void XtbForceImpl::initialize(ContextImpl& context) {
     CustomCPPForceImpl::initialize(context);
+    // get properties from owner
     indices = owner.getParticleIndices();
     numbers = owner.getAtomicNumbers();
     if (indices.size() != numbers.size())
@@ -65,11 +66,14 @@ void XtbForceImpl::initialize(ContextImpl& context) {
         pointCharges = owner.getPointCharges();
         qmParticleIndices = owner.getQMParticleIndices();
         pcCutoff2 = std::pow(owner.getPointChargeCutoff(), 2);
+        boundaryUpdateFrequency = owner.getBoundaryUpdateFrequency();
+        stepSinceLastBoundaryUpdate = 0;
 
         if (owner.getMethod() == XtbForce::GFNFF) {
             throw OpenMMException("GFNFF method does not support external charges");
         }
     }
+    // setup xtb env
     env = xtb_newEnvironment();
     calc = xtb_newCalculator();
     res = xtb_newResults();
@@ -117,51 +121,58 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
     checkErrors();
 
     if (electrostaticEmbedding) {
-        boundaryPCIndices.clear();
-        boundaryPCCharges.clear();
-        boundaryPCNumbers.clear();
-        boundaryPCPositions.clear();
+        ++stepSinceLastBoundaryUpdate;
+        if (stepSinceLastBoundaryUpdate == boundaryUpdateFrequency) {
+            stepSinceLastBoundaryUpdate = 0;
 
-        auto chargeGroupInBoundaryRegion = [&, periodic = owner.usesPeriodicBoundaryConditions()](const std::vector<XtbPointCharge>& chargeGroup) {
-            for (auto [index, number, charge]: chargeGroup) {
-                for (auto j: qmParticleIndices) {
-                    // see https://github.com/openmm/openmm/blob/master/platforms/reference/src/SimTKReference/ReferenceForce.cpp#L80
-                    // works only for cubic boxes
-                    Vec3 diff = positions[index] - positions[j];
-                    if (periodic) {
-                        const Vec3 base(std::floor(diff[0] / box[0][0] + 0.5) * box[0][0],
-                                        std::floor(diff[1] / box[1][1] + 0.5) * box[1][1],
-                                        std::floor(diff[2] / box[2][2] + 0.5) * box[2][2]);
-                        diff -= base;
-                    }
-                    if (diff.dot(diff) <= pcCutoff2) {
-                        return true;
-                    }
+            xtb_releaseExternalCharges(env, calc);
 
-                }
-            }
-            return false;
-        };
+            boundaryPCIndices.clear();
+            boundaryPCCharges.clear();
+            boundaryPCNumbers.clear();
+            boundaryPCPositions.clear();
 
-
-        for (const auto& chargeGroup : pointCharges) {
-            if (chargeGroupInBoundaryRegion(chargeGroup)) {
+            auto chargeGroupInBoundaryRegion = [&, periodic = owner.usesPeriodicBoundaryConditions()](const std::vector<XtbPointCharge>& chargeGroup) {
                 for (auto [index, number, charge]: chargeGroup) {
-                    boundaryPCIndices.push_back(index);
-                    boundaryPCNumbers.push_back(number);
-                    boundaryPCCharges.push_back(charge);
+                    for (auto j: qmParticleIndices) {
+                        // see https://github.com/openmm/openmm/blob/master/platforms/reference/src/SimTKReference/ReferenceForce.cpp#L80
+                        // works only for cubic boxes
+                        Vec3 diff = positions[index] - positions[j];
+                        if (periodic) {
+                            const Vec3 base(std::floor(diff[0] / box[0][0] + 0.5) * box[0][0],
+                                            std::floor(diff[1] / box[1][1] + 0.5) * box[1][1],
+                                            std::floor(diff[2] / box[2][2] + 0.5) * box[2][2]);
+                            diff -= base;
+                        }
+                        if (diff.dot(diff) <= pcCutoff2) {
+                            return true;
+                        }
 
-                    boundaryPCPositions.push_back(distanceScale*positions[index][0]);
-                    boundaryPCPositions.push_back(distanceScale*positions[index][1]);
-                    boundaryPCPositions.push_back(distanceScale*positions[index][2]);
+                    }
+                }
+                return false;
+            };
+
+// TODO #omp parallel for here? probably not as the force are beeing computed in parallel
+            for (const auto& chargeGroup : pointCharges) {
+                if (chargeGroupInBoundaryRegion(chargeGroup)) {
+                    for (auto [index, number, charge]: chargeGroup) {
+                        boundaryPCIndices.push_back(index);
+                        boundaryPCNumbers.push_back(number);
+                        boundaryPCCharges.push_back(charge);
+
+                        boundaryPCPositions.push_back(distanceScale*positions[index][0]);
+                        boundaryPCPositions.push_back(distanceScale*positions[index][1]);
+                        boundaryPCPositions.push_back(distanceScale*positions[index][2]);
+                    }
                 }
             }
-        }
-        numBoundaryPC = boundaryPCIndices.size();
-        pcForceVec.resize(3 * numBoundaryPC);
+            numBoundaryPC = boundaryPCIndices.size();
+            pcForceVec.resize(3 * numBoundaryPC);
 
-        xtb_setExternalCharges(env, calc, &numBoundaryPC, boundaryPCNumbers.data(), boundaryPCCharges.data(), boundaryPCPositions.data());
-        checkErrors();
+            xtb_setExternalCharges(env, calc, &numBoundaryPC, boundaryPCNumbers.data(), boundaryPCCharges.data(), boundaryPCPositions.data());
+            checkErrors();
+        }
     }
 
     // Perform the computation.
@@ -180,7 +191,6 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
         xtb_getPCGradient(env, res, pcForceVec.data());
         for (int i = 0; i < numBoundaryPC; i++)
             forces[boundaryPCIndices[i]] = -forceScale*Vec3(pcForceVec[3*i], pcForceVec[3*i+1], pcForceVec[3*i+2]);
-        xtb_releaseExternalCharges(env, calc);
     }
     return energyScale*energy;
 }

@@ -38,134 +38,189 @@
 #include <vector>
 
 namespace XtbPlugin {
-
-struct XtbPointCharge {
-    XtbPointCharge(int index, int number, double charge);
-    int index;
-    int number;
-    double charge;
-};
-
-/**
- * This class implements a connection between OpenMM and XTB (https://xtb-docs.readthedocs.io/en/latest).  It is a Force
- * object that you add to the System with addForce().  It computes forces on a subset (or potentially all) of the
- * particles in the System using one of the methods supported by XTB.
- */
-
-class OPENMM_EXPORT_XTB XtbForce : public OpenMM::Force {
-public:
     /**
-     * This is an enumeration of methods that can be used to compute forces and energies.
-     */
-    enum Method {
-        GFN1xTB = 0,
-        GFN2xTB = 1,
-        GFNFF = 2
+    * Utility structure to help interfacing with python when setting external charges.
+    */
+    struct XtbPointCharge {
+        XtbPointCharge(int index, int number, double charge);
+
+        int index;
+        int number;
+        double charge;
     };
-    /**
-     * Create a XtbForce.
-     *
-     * @param method           the method to use for computing forces and energy
-     * @param charge           the total charge
-     * @param multiplicity     the spin multiplicity
-     * @param particleIndices  the indices of the particles within the System to which this force should be applied
-     * @param atomicNumbers    the atomic numbers of the particles to which this force should be applied.  This must
-     *                         have the same length as particleIndices.  Element i of this vector is the atomic number
-     *                         of the particle specified by element i of particleIndices.
-     */
-    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers);
-    /**
-     * Create a XtbForce.
-     *
-     * @param method           the method to use for computing forces and energy
-     * @param charge           the total charge
-     * @param multiplicity     the spin multiplicity
-     * @param particleIndices  the indices of the particles within the System to which this force should be applied
-     * @param atomicNumbers    the atomic numbers of the particles to which this force should be applied.  This must
-     *                         have the same length as particleIndices.  Element i of this vector is the atomic number
-     *                         of the particle specified by element i of particleIndices.
-     * @param pointCharges     contains the pointcharges grouped into charge groups. each pointcharge consists of the
-     *                         index, atomic number and charge
-     * @param qmParticleIndices the indices of all qm particles, required to compute the boundary region
-     * @param pcCutoff         the cutoff whether to treat a point charge in the boundary region
-     */
-    XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int>& particleIndices, const std::vector<int>& atomicNumbers, const std::vector<std::vector<XtbPointCharge>>& pointCharges, const std::vector<int>& qmParticleIndices, double pcCutoff);
-    /**
-     * Get the method to use for computing forces and energy.
-     */
-    Method getMethod() const;
-    /**
-     * Set the method to use for computing forces and energy.
-     */
-    void setMethod(Method method);
-    /**
-     * Get the total charge of the XTB system.
-     */
-    double getCharge() const;
-    /**
-     * Set the total charge of the XTB system.
-     */
-    void setCharge(double charge);
-    /**
-     * Get the spin multiplicity of the XTB system.
-     */
-    int getMultiplicity() const;
-    /**
-     * Set the spin multiplicity of the XTB system.
-     */
-    void setMultiplicity(int multiplicity);
-    /**
-     * Get the indices of the particles this force is applied to.
-     */
-    const std::vector<int>& getParticleIndices() const;
-    /**
-     * Set the indices of the particles this force is applied to.
-     */
-    void setParticleIndices(const std::vector<int>& indices);
-    /**
-     * Get the atomic numbers of the particles this force is applied to.
-     */
-    const std::vector<int>& getAtomicNumbers() const;
-    /**
-     * Set the atomic numbers of the particles this force is applied to.
-     */
-    void setAtomicNumbers(const std::vector<int>& numbers);
-
-    const std::vector<std::vector<XtbPointCharge>>& getPointCharges() const;
-
-    void setPointCharges(const std::vector<std::vector<XtbPointCharge>>& pc);
-
-    const std::vector<int>& getQMParticleIndices() const;
-
-    void setQMParticleIndices(const std::vector<int>& qmIndices);
-
-    double getPointChargeCutoff() const;
-
-    void setPointChargeCutoff(double cutoff);
-
-    bool hasElectrostaticEmbedding() const;
 
     /**
-     * Get whether this force uses periodic boundary conditions.
+     * This class implements a connection between OpenMM and XTB (https://xtb-docs.readthedocs.io/en/latest).  It is a Force
+     * object that you add to the System with addForce().  It computes forces on a subset (or potentially all) of the
+     * particles in the System using one of the methods supported by XTB.
      */
-    bool usesPeriodicBoundaryConditions() const;
-    /**
-     * Set whether this force uses periodic boundary conditions.
-     */
-    void setUsesPeriodicBoundaryConditions(bool periodic);
-protected:
-    OpenMM::ForceImpl* createImpl() const;
-private:
-    Method method;
-    double charge;
-    int multiplicity;
-    bool periodic;
-    bool electrostaticEmbedding;
-    double pcCutoff;
-    std::vector<int> particleIndices, atomicNumbers, qmParticleIndices;
-    std::vector<std::vector<XtbPointCharge>> pointCharges;
-};
 
+    class OPENMM_EXPORT_XTB XtbForce : public OpenMM::Force {
+    public:
+        /**
+         * This is an enumeration of methods that can be used to compute forces and energies.
+         */
+        enum Method {
+            GFN1xTB = 0,
+            GFN2xTB = 1,
+            GFNFF = 2
+        };
+
+        /**
+         * Create a XtbForce.
+         *
+         * @param method           the method to use for computing forces and energy
+         * @param charge           the total charge
+         * @param multiplicity     the spin multiplicity
+         * @param periodic         whether to use periodic boundary conditions TODO currently only false works?
+         * @param particleIndices  the indices of the particles within the System to which this force should be applied
+         * @param atomicNumbers    the atomic numbers of the particles to which this force should be applied.  This must
+         *                         have the same length as particleIndices.  Element i of this vector is the atomic number
+         *                         of the particle specified by element i of particleIndices.
+         */
+        XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int> &particleIndices,
+                 const std::vector<int> &atomicNumbers);
+
+        /**
+         * Create a XtbForce.
+         *
+         * @param method           the method to use for computing forces and energy
+         * @param charge           the total charge
+         * @param multiplicity     the spin multiplicity
+         * @param periodic         whether to use periodic boundary conditions TODO currently only false works?
+         * @param particleIndices  the indices of the particles within the System to which this force should be applied
+         * @param atomicNumbers    the atomic numbers of the particles to which this force should be applied.  This must
+         *                         have the same length as particleIndices.  Element i of this vector is the atomic number
+         *                         of the particle specified by element i of particleIndices.
+         * @param pointCharges     contains the pointcharges grouped into charge groups. each pointcharge consists of the
+         *                         index, atomic number and charge
+         * @param qmParticleIndices the indices of all qm particles, required to compute the boundary region
+         * @param pcCutoff         the cutoff whether to treat a point charge in the boundary region
+         * @param boundaryUpdateFrequency every how many force calculation step to update the boundary region
+         */
+        XtbForce(Method method, double charge, int multiplicity, bool periodic, const std::vector<int> &particleIndices,
+                 const std::vector<int> &atomicNumbers, const std::vector<std::vector<XtbPointCharge> > &pointCharges,
+                 const std::vector<int> &qmParticleIndices, double pcCutoff, int boundaryUpdateFrequency = 1);
+
+        /**
+         * Get the method to use for computing forces and energy.
+         */
+        Method getMethod() const;
+
+        /**
+         * Set the method to use for computing forces and energy.
+         */
+        void setMethod(Method method);
+
+        /**
+         * Get the total charge of the XTB system.
+         */
+        double getCharge() const;
+
+        /**
+         * Set the total charge of the XTB system.
+         */
+        void setCharge(double charge);
+
+        /**
+         * Get the spin multiplicity of the XTB system.
+         */
+        int getMultiplicity() const;
+
+        /**
+         * Set the spin multiplicity of the XTB system.
+         */
+        void setMultiplicity(int multiplicity);
+
+        /**
+         * Get the indices of the particles this force is applied to.
+         */
+        const std::vector<int> &getParticleIndices() const;
+
+        /**
+         * Set the indices of the particles this force is applied to.
+         */
+        void setParticleIndices(const std::vector<int> &indices);
+
+        /**
+         * Get the atomic numbers of the particles this force is applied to.
+         */
+        const std::vector<int> &getAtomicNumbers() const;
+
+        /**
+         * Set the atomic numbers of the particles this force is applied to.
+         */
+        void setAtomicNumbers(const std::vector<int> &numbers);
+
+        /**
+         * Get the point charges which are considered in the force.
+         */
+        const std::vector<std::vector<XtbPointCharge> > &getPointCharges() const;
+
+        /**
+         * Set the point charges which are considered in the force.
+         */
+        void setPointCharges(const std::vector<std::vector<XtbPointCharge> > &pc);
+
+        /**
+         * Get the indices of all particles treated in the qm zone, not only by this force (for consistent boundary).
+         */
+        const std::vector<int> &getQMParticleIndices() const;
+
+        /**
+         * Set the indices of all particles treated in the qm zone, not only by this force (for consistent boundary).
+         */
+        void setQMParticleIndices(const std::vector<int> &qmIndices);
+
+        /**
+         * Get the cutoff (in nm) to select boundary point charges.
+         */
+        double getPointChargeCutoff() const;
+
+        /**
+         * Set the cutoff (in nm) to select boundary point charges.
+         */
+        void setPointChargeCutoff(double cutoff);
+
+        /**
+         * Query whether this force has point charges.
+         */
+        bool hasElectrostaticEmbedding() const;
+
+        /**
+         * Get every how many force calculations the boundary point charges are updated.
+         */
+        int getBoundaryUpdateFrequency() const;
+
+        /**
+         * Set every how many force calculations the boundary point charges are updated.
+         */
+        void setBoundaryUpdateFrequency(int frequency);
+
+        /**
+         * Get whether this force uses periodic boundary conditions.
+         */
+        bool usesPeriodicBoundaryConditions() const;
+
+        /**
+         * Set whether this force uses periodic boundary conditions.
+         */
+        void setUsesPeriodicBoundaryConditions(bool periodic);
+
+    protected:
+        OpenMM::ForceImpl *createImpl() const;
+
+    private:
+        Method method;
+        double charge;
+        int multiplicity;
+        bool periodic;
+        bool electrostaticEmbedding;
+        double pcCutoff;
+        std::vector<int> particleIndices, atomicNumbers, qmParticleIndices;
+        std::vector<std::vector<XtbPointCharge> > pointCharges;
+        int boundaryUpdateFrequency;
+    };
 } // namespace XtbPlugin
 
 #endif /*OPENMM_XTBFORCE_H_*/

@@ -40,9 +40,9 @@ using namespace std;
 XtbForceProxy::XtbForceProxy() : SerializationProxy("XtbForce") {
 }
 
-void XtbForceProxy::serialize(const void* object, SerializationNode& node) const {
+void XtbForceProxy::serialize(const void *object, SerializationNode &node) const {
     node.setIntProperty("version", 0);
-    const XtbForce& force = *reinterpret_cast<const XtbForce*>(object);
+    const XtbForce &force = *reinterpret_cast<const XtbForce *>(object);
     node.setIntProperty("forceGroup", force.getForceGroup());
     node.setStringProperty("name", force.getName());
     node.setIntProperty("method", (int) force.getMethod());
@@ -50,67 +50,69 @@ void XtbForceProxy::serialize(const void* object, SerializationNode& node) const
     node.setIntProperty("multiplicity", force.getMultiplicity());
     node.setBoolProperty("periodic", force.usesPeriodicBoundaryConditions());
     node.setBoolProperty("electrostaticEmbedding", force.hasElectrostaticEmbedding());
-    const vector<int>& indices = force.getParticleIndices();
-    auto& indicesNode = node.createChildNode("indices");
+    const vector<int> &indices = force.getParticleIndices();
+    auto &indicesNode = node.createChildNode("indices");
     for (int i = 0; i < indices.size(); i++)
         indicesNode.createChildNode("particle").setIntProperty("index", indices[i]);
-    const vector<int>& numbers = force.getAtomicNumbers();
-    auto& numbersNode = node.createChildNode("numbers");
+    const vector<int> &numbers = force.getAtomicNumbers();
+    auto &numbersNode = node.createChildNode("numbers");
     for (int i = 0; i < indices.size(); i++)
         numbersNode.createChildNode("particle").setIntProperty("number", numbers[i]);
     if (force.hasElectrostaticEmbedding()) {
         node.setDoubleProperty("pcCutoff", force.getPointChargeCutoff());
-        auto& pointChargesNode = node.createChildNode("pointCharges");
-        for (const auto& chargeGroup: force.getPointCharges()) {
-            auto& chargeGroupNode = pointChargesNode.createChildNode("chargeGroup");
+        node.setIntProperty("boundaryUpdateFrequency", force.getBoundaryUpdateFrequency());
+        auto &pointChargesNode = node.createChildNode("pointCharges");
+        for (const auto &chargeGroup: force.getPointCharges()) {
+            auto &chargeGroupNode = pointChargesNode.createChildNode("chargeGroup");
             for (auto [index, number, charge]: chargeGroup) {
-                auto& pcNode = chargeGroupNode.createChildNode("pointCharge");
+                auto &pcNode = chargeGroupNode.createChildNode("pointCharge");
                 pcNode.setIntProperty("index", index);
                 pcNode.setIntProperty("number", number);
                 pcNode.setDoubleProperty("charge", charge);
             }
         }
-        const vector<int>& qmIndices = force.getQMParticleIndices();
-        auto& qmParticleIndicesNode = node.createChildNode("qmIndices");
+        const vector<int> &qmIndices = force.getQMParticleIndices();
+        auto &qmParticleIndicesNode = node.createChildNode("qmIndices");
         for (int i = 0; i < qmIndices.size(); i++)
             qmParticleIndicesNode.createChildNode("particle").setIntProperty("index", qmIndices[i]);
     }
 }
 
-void* XtbForceProxy::deserialize(const SerializationNode& node) const {
+void *XtbForceProxy::deserialize(const SerializationNode &node) const {
     const int version = node.getIntProperty("version");
     if (version != 0)
         throw OpenMMException("Unsupported version number");
 
     vector<int> indices, numbers;
-    for (const auto& particle: node.getChildNode("indices").getChildren())
+    for (const auto &particle: node.getChildNode("indices").getChildren())
         indices.push_back(particle.getIntProperty("index"));
-    for (const auto& particle: node.getChildNode("numbers").getChildren())
+    for (const auto &particle: node.getChildNode("numbers").getChildren())
         numbers.push_back(particle.getIntProperty("number"));
     bool electrostaticEmbedding = node.getBoolProperty("electrostaticEmbedding");
     XtbForce *force = nullptr;
     if (electrostaticEmbedding) {
-        vector<vector<XtbPointCharge>> pointCharges;
+        vector<vector<XtbPointCharge> > pointCharges;
 
-        for (const auto& chargeGroup: node.getChildNode("pointCharges").getChildren()) {
+        for (const auto &chargeGroup: node.getChildNode("pointCharges").getChildren()) {
             std::vector<XtbPointCharge> chrgGroup;
-            for (const auto& pointCharge: chargeGroup.getChildren()) {
+            for (const auto &pointCharge: chargeGroup.getChildren()) {
                 chrgGroup.emplace_back(pointCharge.getIntProperty("index"),
-                pointCharge.getIntProperty("number"),
-                pointCharge.getDoubleProperty("charge"));
+                                       pointCharge.getIntProperty("number"),
+                                       pointCharge.getDoubleProperty("charge"));
             }
             pointCharges.push_back(chrgGroup);
-
         }
         vector<int> qmIndices;
-        for (const auto& particle: node.getChildNode("qmIndices").getChildren()) {
+        for (const auto &particle: node.getChildNode("qmIndices").getChildren()) {
             qmIndices.push_back(particle.getIntProperty("index"));
         }
         force = new XtbForce((XtbForce::Method) node.getIntProperty("method"), node.getDoubleProperty("charge"),
-            node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers, pointCharges, qmIndices, node.getDoubleProperty("pcCutoff"));
+                             node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers,
+                             pointCharges, qmIndices, node.getDoubleProperty("pcCutoff"),
+                             node.getIntProperty("boundaryUpdateFrequency"));
     } else {
         force = new XtbForce((XtbForce::Method) node.getIntProperty("method"), node.getDoubleProperty("charge"),
-                node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers);
+                             node.getIntProperty("multiplicity"), node.getBoolProperty("periodic"), indices, numbers);
     }
     force->setForceGroup(node.getIntProperty("forceGroup", 0));
     force->setName(node.getStringProperty("name", force->getName()));
