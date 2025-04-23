@@ -33,6 +33,7 @@
 #include "openmm/OpenMMException.h"
 #include "openmm/internal/ContextImpl.h"
 #include <cmath>
+#include <omp.h>
 
 using namespace XtbPlugin;
 using namespace OpenMM;
@@ -106,7 +107,8 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
     if (hasInitializedMolecule)
         xtb_updateMolecule(env, mol, positionVec.data(), boxVectors);
     else {
-        bool periodic[3] = {owner.usesPeriodicBoundaryConditions(), owner.usesPeriodicBoundaryConditions(), owner.usesPeriodicBoundaryConditions()};
+//        bool periodic[3] = {owner.usesPeriodicBoundaryConditions(), owner.usesPeriodicBoundaryConditions(), owner.usesPeriodicBoundaryConditions()};
+        bool periodic[3] = {false, false, false}; // periodic boundary conditions don't work with external charges (scf: Multipoles not available with PBC)
         mol = xtb_newMolecule(env, &numParticles, numbers.data(), positionVec.data(), &charge, &multiplicity, boxVectors, periodic);
         checkErrors();
         if (owner.getMethod() == XtbForce::GFN1xTB)
@@ -132,7 +134,9 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
             boundaryPCNumbers.clear();
             boundaryPCPositions.clear();
 
-            auto chargeGroupInBoundaryRegion = [&, periodic = owner.usesPeriodicBoundaryConditions()](const std::vector<XtbPointCharge>& chargeGroup) {
+            const bool periodic = owner.usesPeriodicBoundaryConditions();
+
+            auto chargeGroupInBoundaryRegion = [&](const std::vector<XtbPointCharge>& chargeGroup) {
                 for (auto [index, number, charge]: chargeGroup) {
                     for (auto j: qmParticleIndices) {
                         // see https://github.com/openmm/openmm/blob/master/platforms/reference/src/SimTKReference/ReferenceForce.cpp#L80
@@ -156,14 +160,32 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
 // TODO #omp parallel for here? probably not as the force are beeing computed in parallel
             for (const auto& chargeGroup : pointCharges) {
                 if (chargeGroupInBoundaryRegion(chargeGroup)) {
+                    Vec3 offset;
+
+                    if (periodic) { // see https://github.com/openmm/openmm/blob/1767ffeed83fa15d6de91e797a4f7ae482eb8413/openmmapi/src/Context.cpp#L122
+                        // Find the molecule center.
+                        // This requires the qm molecule to be in the middle of the box TODO make it relative to the qm molecule
+                        Vec3 center;
+                        for (auto [index, n, c]: chargeGroup){
+                            center += positions[index];
+                        }
+                        center /= chargeGroup.size();
+
+                        // Find the displacement to move it into the first periodic box.
+                        offset += box[2]*std::floor(center[2]/box[2][2]);
+                        offset += box[1]*std::floor((center[1]-offset[1])/box[1][1]);
+                        offset += box[0]*std::floor((center[0]-offset[0])/box[0][0]);
+                    }
+
                     for (auto [index, number, charge]: chargeGroup) {
                         boundaryPCIndices.push_back(index);
                         boundaryPCNumbers.push_back(number);
                         boundaryPCCharges.push_back(charge);
 
-                        boundaryPCPositions.push_back(distanceScale*positions[index][0]);
-                        boundaryPCPositions.push_back(distanceScale*positions[index][1]);
-                        boundaryPCPositions.push_back(distanceScale*positions[index][2]);
+                        Vec3 positionInBox = positions[index] - offset;
+                        boundaryPCPositions.push_back(distanceScale*positionInBox[0]);
+                        boundaryPCPositions.push_back(distanceScale*positionInBox[1]);
+                        boundaryPCPositions.push_back(distanceScale*positionInBox[2]);
                     }
                 }
             }
@@ -176,7 +198,6 @@ double XtbForceImpl::computeForce(ContextImpl& context, const vector<Vec3>& posi
     }
 
     // Perform the computation.
-
     xtb_singlepoint(env, mol, calc, res);
     checkErrors();
     double energy;

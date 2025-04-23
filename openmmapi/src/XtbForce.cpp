@@ -141,7 +141,8 @@ void XtbForce::setBoundaryUpdateFrequency(int frequency) {
 }
 
 bool XtbForce::usesPeriodicBoundaryConditions() const {
-    return periodic;
+    return true; // periodic boundary conditions are used but not for xtb_singlepoint
+//    return periodic;
 }
 
 void XtbForce::setUsesPeriodicBoundaryConditions(bool periodic) {

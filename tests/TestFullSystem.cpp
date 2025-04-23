@@ -199,11 +199,14 @@ void testSetA(Platform &platform) {
 
     std::unique_ptr<System> system(OpenMM::XmlSerializer::deserialize<System>(system_xml));
 
+    bool is_periodic = system->usesPeriodicBoundaryConditions();
+
     CustomIntegrator integrator = qmedsIntegrator(6);
 
     std::vector<OpenMM::Vec3> positions = extractPositionsFromPDB("input/seta_wat_qm.pdb");
     Context context(*system, integrator, platform);
     context.setPositions(positions);
+//    platform.setPropertyValue(context, "Threads", "1");
 
     // Simulate it and make sure that the geometry remains reasonable.
     constexpr size_t num_steps = 100;
@@ -227,7 +230,9 @@ int main() {
 //            testSetA(platform);
 //        }
         printf("Testing CPU\n");
-        testSetA(Platform::getPlatform("CPU"));
+        auto& platform = Platform::getPlatform("CPU");
+//        platform.setPropertyDefaultValue("Threads", "1");
+        testSetA(platform);
     }
     catch (const OpenMMException &e) {
         std::cout << "exception: " << e.what() << std::endl;
