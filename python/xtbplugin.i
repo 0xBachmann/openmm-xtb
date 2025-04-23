@@ -67,6 +67,8 @@ public:
     double getPointChargeCutoff() const;
     void setPointChargeCutoff(double cutoff);
     bool hasElectrostaticEmbedding() const;
+    int getBoundaryUpdateFrequency() const;
+    void setBoundaryUpdateFrequency(int frequency);
     bool usesPeriodicBoundaryConditions() const;
     void setUsesPeriodicBoundaryConditions(bool periodic);
 
