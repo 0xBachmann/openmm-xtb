@@ -53,7 +53,6 @@ public:
     }
     double computeForce(OpenMM::ContextImpl& context, const std::vector<OpenMM::Vec3>& positions, std::vector<OpenMM::Vec3>& forces);
 private:
-    void updatePCList(OpenMM::ContextImpl& context, const std::vector<OpenMM::Vec3>& positions);
     void checkErrors();
     const XtbForce& owner;
     xtb_TEnvironment env;
