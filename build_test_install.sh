@@ -3,7 +3,7 @@ set -e
 
 # Initialize variables
 skip_conda=false
-conda_env="QMEDS_OpenMM"  # Default conda environment
+conda_env="EDS_OpenMM"  # Default conda environment
 shift_count=0
 
 # Function to display help message
